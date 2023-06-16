@@ -34,35 +34,53 @@ describe("NFTMarketplace", function () {
     });
 
     it('Should test whole create listing functionality', async function () {
-        await expect(nftMarketplace.createListing('0x8584e7a1817c795f74ce985a1d13b962758fe3ca', 10, 1000000000)).to.be.revertedWith('Provided address is not a contract.');
-        await expect(nftMarketplace.createListing(e20.address, 10, 1000000000)).to.be.revertedWithoutReason();
-        await expect(nftMarketplace.createListing(e721.address, 10, 1000000000)).to.be.revertedWith('ERC721: invalid token ID');
-        await expect(nftMarketplace.createListing(e721.address, 1, 1000000000)).to.be.revertedWith('NFTMarketplace is not allowed to transfer your tokens.');
+        await expect(nftMarketplace.createListing('0x8584e7a1817c795f74ce985a1d13b962758fe3ca', 10, 1000000000))
+            .to.be.revertedWith('Provided address is not a contract.');
+        await expect(nftMarketplace.createListing(e20.address, 10, 1000000000))
+            .to.be.revertedWithoutReason();
+        await expect(nftMarketplace.createListing(e721.address, 10, 1000000000))
+            .to.be.revertedWith('ERC721: invalid token ID');
+        await expect(nftMarketplace.createListing(e721.address, 1, 1000000000))
+            .to.be.revertedWith('NFTMarketplace is not allowed to transfer your tokens.');
 
         await e721.setApprovalForAll(nftMarketplace.address, true);
 
-        expect(await nftMarketplace.createListing(e721.address, 1, ethers.utils.parseEther("1"))).to.emit(nftMarketplace, "LogListingCreated");
-        expect(await nftMarketplace.createListing(e721.address, 2, ethers.utils.parseEther("2"))).to.emit(nftMarketplace, "LogListingCreated");
-        expect(await nftMarketplace.createListing(e721.address, 3, ethers.utils.parseEther("3"))).to.emit(nftMarketplace, "LogListingCreated");
+        expect(await nftMarketplace.createListing(e721.address, 1, ethers.utils.parseEther("1")))
+            .to.emit(nftMarketplace, "LogListingCreated");
+        expect(await nftMarketplace.createListing(e721.address, 2, ethers.utils.parseEther("2")))
+            .to.emit(nftMarketplace, "LogListingCreated");
+        expect(await nftMarketplace.createListing(e721.address, 3, ethers.utils.parseEther("3")))
+            .to.emit(nftMarketplace, "LogListingCreated");
+
+        const [owner, addr1] = await ethers.getSigners();
+        await expect(nftMarketplace.connect(addr1).createListing(e721.address, 3, 10000000))
+            .to.be.revertedWith('You are not the owner of this tokenId');
     });
 
     it('Should test the cancel listing functionality', async function () {
         const [owner, addr1] = await ethers.getSigners();
 
-        expect(await nftMarketplace.cancelListing(1)).to.emit(nftMarketplace, "LogListingCanceled");
-        await expect(nftMarketplace.connect(addr1).cancelListing(1)).to.be.revertedWith('You are not the creator of this listing.');
+        expect(await nftMarketplace.cancelListing(1))
+            .to.emit(nftMarketplace, "LogListingCanceled");
+        await expect(nftMarketplace.connect(addr1).cancelListing(1))
+            .to.be.revertedWith('You are not the creator of this listing.');
     });
 
     it('Should test the buy listing functionality', async function () {
         const [owner, addr1] = await ethers.getSigners();
 
-        await expect(nftMarketplace.buyListing(1)).to.be.revertedWith('Listing is canceled.');
-        await expect(nftMarketplace.buyListing(2)).to.be.revertedWith('You cannot buy your own listing.');
-        await expect(nftMarketplace.connect(addr1).buyListing(2)).to.be.revertedWith('Selling price of the listing is not the same as the value provided');
+        await expect(nftMarketplace.buyListing(1))
+            .to.be.revertedWith('Listing is canceled.');
+        await expect(nftMarketplace.buyListing(2))
+            .to.be.revertedWith('You cannot buy your own listing.');
+        await expect(nftMarketplace.connect(addr1).buyListing(2))
+            .to.be.revertedWith('Selling price of the listing is not the same as the value provided');
 
-        await expect(nftMarketplace.connect(addr1).buyListing(2, {value: ethers.utils.parseEther("3")})).to.emit(nftMarketplace, "LogPurchaseSuccessful");
+        await expect(nftMarketplace.connect(addr1).buyListing(2, {value: ethers.utils.parseEther("3")}))
+            .to.emit(nftMarketplace, "LogPurchaseSuccessful");
 
         expect(await e721.ownerOf(3)).to.equal(addr1.address);
-        await expect(nftMarketplace.connect(addr1).buyListing(2)).to.be.revertedWith('Listing is already sold.');
+        await expect(nftMarketplace.connect(addr1).buyListing(2))
+            .to.be.revertedWith('Listing is already sold.');
     });
 });

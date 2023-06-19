@@ -3,8 +3,9 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract NFTMarketplace {
+contract NFTMarketplace is ReentrancyGuard {
     using Counters for Counters.Counter;
     Counters.Counter private _listingsIds;
 //    Counters.Counter private _offersIds;
@@ -39,11 +40,10 @@ contract NFTMarketplace {
 //    event LogOfferAccepted(uint offerId);
 //    event LogOfferCanceled(uint offerId);
 
-    function createListing(address contractAddress, uint tokenId, uint priceInWei) public {
-        require(isERC721(contractAddress), "Provided contract is not of type ERC721.");
-
+    function createListing(address contractAddress, uint tokenId, uint priceInWei) public isERC721(contractAddress) {
         IERC721 contractInstance = IERC721(contractAddress);
 
+        require(priceInWei > 0, "Price in wei should be greater than 0");
         require(contractInstance.ownerOf(tokenId) == msg.sender, "You are not the owner of this tokenId");
         require(contractInstance.isApprovedForAll(msg.sender, address(this)), "NFTMarketplace is not allowed to transfer your tokens.");
 
@@ -56,7 +56,7 @@ contract NFTMarketplace {
         emit LogListingCreated(newListingId, contractAddress, tokenId, msg.sender, priceInWei);
     }
 
-    function buyListing(uint listingId) public payable {
+    function buyListing(uint listingId) public payable nonReentrant {
         require(listings[listingId].canceled == false, "Listing is canceled.");
         require(listings[listingId].seller != msg.sender, "You cannot buy your own listing.");
         require(listings[listingId].buyer == address(0), "Listing is already sold.");
@@ -77,6 +77,7 @@ contract NFTMarketplace {
 
     function cancelListing(uint listingId) public {
         require(listings[listingId].seller == msg.sender, "You are not the creator of this listing.");
+        require(listings[listingId].canceled == false, "Listing is already canceled.");
         listings[listingId].canceled = true;
 
         emit LogListingCanceled(listingId);
@@ -93,15 +94,8 @@ contract NFTMarketplace {
 //
 //    }
 
-    function isERC721(address contractAddress) private view returns (bool) {
-        require(isContract(contractAddress), "Provided address is not a contract.");
-
-        return IERC165(contractAddress).supportsInterface(type(IERC721).interfaceId);
-    }
-
-    function isContract(address contractAddress) private view returns (bool) {
-        uint size;
-        assembly { size := extcodesize(contractAddress) }
-        return size > 0;
+    modifier isERC721(address contractAddress) {
+        require(IERC165(contractAddress).supportsInterface(type(IERC721).interfaceId), "Provided address is not an ERC721 contract.");
+        _;
     }
 }

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start-cli": "npx nodemon"
   },
   "repository": {
     "type": "git",
@@ -15,6 +15,11 @@
   "bugs": {
     "url": "https://github.com/keranskit/nft-marketplace/issues"
   },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  },
   "homepage": "https://github.com/keranskit/nft-marketplace#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
@@ -22,6 +27,9 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.1",
-    "dotenv": "^16.1.4"
+    "dotenv": "^16.1.4",
+    "ethers": "^5.7.2",
+    "nodemon": "^2.0.22",
+    "ts-node": "^10.9.1"
   }
 }

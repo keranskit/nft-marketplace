@@ -8,4 +8,10 @@ export async function main(_privateKey: any) {
     const nftMarketplace = await nftMarketplaceFactory.connect(wallet).deploy();
     await nftMarketplace.deployed();
     console.log(`The NFTMarketplace contract is deployed to ${nftMarketplace.address}`);
+    
+    const e271factory = await ethers.getContractFactory('E721');
+    const e721 = await e271factory.connect(wallet).deploy();
+    await e721.deployed();
+    console.log(`The e721 contract is deployed to ${e721.address}`);
+
 }

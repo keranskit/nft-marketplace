@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
-import { validateNetwork, validateCommand, validateDotEnvFile } from './cli/validations/validator';
-import { getContract, getProvider, getSigner, proceedCommand } from "./cli/services/contractService";
+import { validateNetwork, validateCommand, validateDotEnvFile } from './validations/validator';
+import { getContract, getProvider, getSigner, proceedCommand } from "./services/contractService";
 
 config();
 export async function main() {

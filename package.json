@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start-cli": "npx nodemon"
+    "start-cli": "npx nodemon cli/index.ts",
+    "start-indexer": "npx nodemon indexer/index.js"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "@openzeppelin/contracts": "^4.9.1",
     "dotenv": "^16.1.4",
     "ethers": "^5.7.2",
+    "mongodb": "^4.16.0",
     "nodemon": "^2.0.22",
     "ts-node": "^10.9.1"
   }

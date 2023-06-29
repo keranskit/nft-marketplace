@@ -30,16 +30,7 @@ class ListingsRepository {
         return this.collection.find(filters).stream({transform: doc => ListingModel.fromBSON(doc)});
     }
 
-    getCollectionTradedListingsStream(collectionAddress) {
-        const filters = {
-            buyer: {$ne: ethers.constants.AddressZero},
-            contractAddress: collectionAddress
-        }
-
-        return this.collection.find(filters).stream({transform: doc => ListingModel.fromBSON(doc)});
-    }
-
-    getCollectionFloorPriceStream(collectionAddress) {
+    getCollectionStream(collectionAddress) {
         const filters = {
             contractAddress: collectionAddress
         }

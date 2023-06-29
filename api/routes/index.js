@@ -26,8 +26,7 @@ class Router {
     _init() {
         this.router.get('/listings-by-collection/:collection', this.controllers.ListingsController.getAllActiveListingsByCollection.bind(this.controllers.ListingsController));
         this.router.get('/listings-by-creator/:address', this.controllers.ListingsController.getAllActiveListingsByCreator.bind(this.controllers.ListingsController));
-        this.router.get('/traded-volume/:collection', this.controllers.ListingsController.getCollectionTradedVolume.bind(this.controllers.ListingsController));
-        this.router.get('/floor-price/:collection', this.controllers.ListingsController.getCollectionFloorPrice.bind(this.controllers.ListingsController));
+        this.router.get('/collection-data/:collection', this.controllers.ListingsController.getCollectionData.bind(this.controllers.ListingsController));
         this.router.get('/purchase-history/:address', this.controllers.ListingsController.getPurchaseHistoryByBuyer.bind(this.controllers.ListingsController));
     }
 }

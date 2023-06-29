@@ -101,6 +101,7 @@ contract NFTMarketplace is ReentrancyGuard {
     }
 
     function acceptOffer(uint offerId) public {
+        require(offers[offerId].canceled == false, "Offer is already canceled");
         require(listings[offers[offerId].listingId].seller == msg.sender, "You cannot accept offers for someone else's listings.");
 
         Offer storage offer = offers[offerId];
@@ -118,7 +119,7 @@ contract NFTMarketplace is ReentrancyGuard {
         emit LogOfferCanceled(offerId);
     }
 
-    function buyListingByAcceptedOffer(uint offerId) public payable {
+    function buyListingByAcceptedOffer(uint offerId) public payable nonReentrant {
         uint listingId = offers[offerId].listingId;
 
         require(listings[listingId].canceled == false, "Listing is canceled.");

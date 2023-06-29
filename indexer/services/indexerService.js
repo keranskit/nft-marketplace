@@ -35,6 +35,8 @@ class IndexerService {
     }
 
     async processContractOldEvents(networkLastBlock, fromBlockNumber = undefined) {
+        console.log('Processing old events...')
+
         const contractEvents = await this.contract.queryFilter('*', fromBlockNumber);
         for (const event of contractEvents) {
             await this.processEvent(event);
@@ -46,25 +48,40 @@ class IndexerService {
     }
 
     async startListeningForNewEvents() {
-        this.contract.on(eventNames.LISTING_CREATED, async (listingId, contractAddress, tokenId, seller, priceInWei, event) => {
-            const blockData = await event.getBlock();
-            await this.processListingCreated(event.args, blockData);
+        console.log('Live listening for new contract events started')
 
-            await this.blocksRepository.updateLastProcessedBlock(blockData.number);
+        this.contract.on(eventNames.LISTING_CREATED, async (listingId, contractAddress, tokenId, seller, priceInWei, event) => {
+            try {
+                const blockData = await event.getBlock();
+                await this.processListingCreated(event.args, blockData);
+
+                await this.blocksRepository.updateLastProcessedBlock(blockData.number);
+            } catch (e) {
+                console.log(e)
+            }
         })
 
         this.contract.on(eventNames.LISTING_CANCELED, async (listingId, event) => {
-            const blockData = await event.getBlock();
-            await this.processListingCanceled(event.args, blockData);
+            try {
+                const blockData = await event.getBlock();
+                await this.processListingCanceled(event.args, blockData);
 
-            await this.blocksRepository.updateLastProcessedBlock(blockData.number);
+                await this.blocksRepository.updateLastProcessedBlock(blockData.number);
+            } catch (e) {
+                console.log(e)
+            }
+
         })
 
         this.contract.on(eventNames.PURCHASE_SUCCESSFUL, async (listingId, buyer, event) => {
-            const blockData = await event.getBlock();
-            await this.processPurchaseSuccessful(event.args, blockData);
+            try {
+                const blockData = await event.getBlock();
+                await this.processPurchaseSuccessful(event.args, blockData);
 
-            await this.blocksRepository.updateLastProcessedBlock(blockData.number);
+                await this.blocksRepository.updateLastProcessedBlock(blockData.number);
+            } catch (e) {
+                console.log(e)
+            }
         })
     }
 
@@ -96,19 +113,19 @@ class IndexerService {
         data.timestamp = blockData.timestamp;
         data.active = true;
 
-        console.log(`insert ${data.listingId}`)
+        console.log(`Indexer: processing listing created with id ${data.listingId}`);
 
         await this.listingsRepository.createListing(data);
     }
 
     async processListingCanceled(eventArgs, blockData) {
-        console.log(`cancel ${eventArgs.listingId.toString()}`)
+        console.log(`Indexer: processing cancel listing with id ${eventArgs.listingId.toString()}`);
 
         await this.listingsRepository.markListingAsCanceled(eventArgs.listingId.toString(), blockData.timestamp);
     }
 
     async processPurchaseSuccessful(eventArgs, blockData) {
-        console.log(`buy ${eventArgs.listingId.toString()}`)
+        console.log(`Indexer: processing purchase successful with id ${eventArgs.listingId.toString()}`);
 
         await this.listingsRepository.markListingAsBought(eventArgs.listingId.toString(), eventArgs.buyer, blockData.timestamp);
     }

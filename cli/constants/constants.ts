@@ -16,4 +16,20 @@ export const INPUTS = {
         command: 'cancel-listing',
         additionalParamsCount: 1
     },
+    CREATE_OFFER: {
+        command: 'create-offer',
+        additionalParamsCount: 2
+    },
+    ACCEPT_OFFER: {
+        command: 'accept-offer',
+        additionalParamsCount: 1
+    },
+    CANCEL_OFFER: {
+        command: 'cancel-offer',
+        additionalParamsCount: 1
+    },
+    BUY_LISTING_BY_ACCEPTED_OFFER: {
+        command: 'buy-listing-by-offer',
+        additionalParamsCount: 1
+    },
 }

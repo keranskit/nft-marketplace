@@ -1,6 +1,7 @@
 'use strict';
 
 const ethers = require("ethers");
+const {BigNumber} = require("ethers");
 
 class ListingsController {
 
@@ -76,53 +77,20 @@ class ListingsController {
      * @param ctx
      * @returns {Promise<void>}
      */
-    async getCollectionTradedVolume(ctx) {
-        const collectionAddress = ctx.params.collection;
-
-        await new Promise((resolve) => {
-            let totalSum = ethers.BigNumber.from('0');
-            const stream = this.listingsRepository.getCollectionTradedListingsStream(collectionAddress);
-
-            stream.on('data', listing => {
-                totalSum = totalSum.add(ethers.BigNumber.from(listing.priceInWei))
-            });
-
-            stream.on('error', error => {
-                console.log(error);
-
-                this._setErrorResponse(ctx, 500, 'unexpected_server_error');
-                resolve();
-            });
-
-            stream.on('end', () => {
-                const res = {
-                    collectionTradedVolumeInWei: totalSum.toString(),
-                    collectionTradedVolumeInEth: ethers.utils.formatUnits(totalSum)
-                }
-
-                this._setSuccessResponse(ctx, 200, res);
-
-                resolve();
-            });
-        });
-    }
-
-    /**
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    async getCollectionFloorPrice(ctx) {
+    async getCollectionData(ctx) {
         const collectionAddress = ctx.params.collection;
 
         await new Promise((resolve) => {
             let floorPrice;
-            const stream = this.listingsRepository.getCollectionFloorPriceStream(collectionAddress);
+            let tradedVolume = BigNumber.from(0)
+            const stream = this.listingsRepository.getCollectionStream(collectionAddress);
 
             stream.on('data', listing => {
                 const price = ethers.BigNumber.from(listing.priceInWei)
 
                 if (!floorPrice) floorPrice = price;
                 if (floorPrice.gt(price)) floorPrice = price;
+                if (listing.buyer !== ethers.constants.AddressZero) tradedVolume = tradedVolume.add(ethers.BigNumber.from(listing.priceInWei))
             });
 
             stream.on('error', error => {
@@ -135,7 +103,9 @@ class ListingsController {
             stream.on('end', () => {
                 const res = {
                     collectionFloorPriceInWei: floorPrice.toString(),
-                    collectionFloorPriceInEth: ethers.utils.formatUnits(floorPrice)
+                    collectionFloorPriceInEth: ethers.utils.formatUnits(floorPrice),
+                    collectionTradedVolumeInWei: tradedVolume.toString(),
+                    collectionTradedVolumeInEth: ethers.utils.formatUnits(tradedVolume)
                 }
 
                 this._setSuccessResponse(ctx, 200, res);

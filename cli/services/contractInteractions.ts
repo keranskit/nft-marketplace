@@ -8,7 +8,6 @@ export async function createListing(contract: ethers.Contract, erc721contract: s
 
         console.log(`Listing created in tx with hash ${createListingReceiptResult.transactionHash} in block ${createListingReceiptResult.blockNumber}; gas used: ${createListingGasUsed}`);
     } catch (err) {
-        //todo fix error handling https://dev.to/george_k/embracing-custom-errors-in-solidity-55p8
         console.log(err)
     }
 }
@@ -21,7 +20,6 @@ export async function buyListing(contract: ethers.Contract, listingId: number, p
 
         console.log(`Listing bought in tx with hash ${buyListingReceiptResult.transactionHash} in block ${buyListingReceiptResult.blockNumber}; gas used: ${buyListingGasUsed}`);
     } catch (err) {
-        //todo fix error handling https://dev.to/george_k/embracing-custom-errors-in-solidity-55p8
         console.log(err);
     }
 }
@@ -34,7 +32,6 @@ export async function cancelListing(contract: ethers.Contract, listingId: number
 
         console.log(`Listing canceled in tx with hash ${cancelListingReceiptResult.transactionHash} in block ${cancelListingReceiptResult.blockNumber}; gas used: ${cancelListingGasUsed}`);
     } catch (err) {
-        //todo fix error handling https://dev.to/george_k/embracing-custom-errors-in-solidity-55p8
         console.log(err);
     }
 }

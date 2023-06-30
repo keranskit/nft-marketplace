@@ -30,14 +30,6 @@ class OffersRepository {
             {'$set': update}
         );
     }
-
-    async markOfferAsCompleted(offerId, timestamp) {
-        const update = {'completed': true, 'timestamp': timestamp}
-        return this.collection.findOneAndUpdate(
-            {offerId: offerId},
-            {'$set': update}
-        );
-    }
 }
 
 module.exports = OffersRepository;

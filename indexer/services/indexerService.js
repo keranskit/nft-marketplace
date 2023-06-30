@@ -83,7 +83,7 @@ class IndexerService {
             }
         })
 
-        this.contract.on(eventNames.OFFER_CREATED, async (offerId, listingId, proposer, offerPriceInWei, event) => {
+        this.contract.on(eventNames.OFFER_CREATED, async (offerId, listingId, contractAddress, tokenId, proposer, offerPriceInWei, event) => {
             try {
                 const blockData = await event.getBlock();
                 await this.processOfferCreated(event.args, blockData);
@@ -172,12 +172,13 @@ class IndexerService {
         const data = {
             offerId: eventArgs.offerId.toString(),
             listingId: eventArgs.listingId.toString(),
-            proposer: eventArgs.proposer.toString(),
+            contractAddress: eventArgs.contractAddress,
+            tokenId: eventArgs.tokenId.toString(),
+            proposer: eventArgs.proposer,
             offerPriceInWei: eventArgs.offerPriceInWei.toString(),
             timestamp: blockData.timestamp,
             canceled: false,
-            accepted: false,
-            completed: false
+            accepted: false
         }
 
         console.log(`Indexer: processing offer created with id ${eventArgs.offerId.toString()}`);

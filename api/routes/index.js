@@ -28,6 +28,8 @@ class Router {
         this.router.get('/listings-by-creator/:address', this.controllers.ListingsController.getAllActiveListingsByCreator.bind(this.controllers.ListingsController));
         this.router.get('/collection-data/:collection', this.controllers.ListingsController.getCollectionData.bind(this.controllers.ListingsController));
         this.router.get('/purchase-history/:address', this.controllers.ListingsController.getPurchaseHistoryByBuyer.bind(this.controllers.ListingsController));
+        this.router.get('/offers/:collection', this.controllers.OffersController.getAllActiveOffersByCollection.bind(this.controllers.OffersController));
+        this.router.get('/offers/:collection/:tokenId', this.controllers.OffersController.getAllActiveOffersByCollection.bind(this.controllers.OffersController));
     }
 }
 

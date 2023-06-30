@@ -1,12 +1,14 @@
 'use strict';
 
 const ListingsController = require('./listingsController');
+const OffersController = require('./offersController');
 
 class Controllers {
 
     /**
      * @param {Object} repositories
      * @param {ListingsRepository} repositories.listings
+     * @param {OffersRepository} repositories.offers
      */
     constructor(repositories) {
         this.repositories = repositories;
@@ -26,7 +28,8 @@ class Controllers {
      */
     _initControllers() {
         return {
-            ListingsController: new ListingsController(this.repositories.listings),
+            ListingsController: new ListingsController(this.repositories.listings, this.repositories.offers),
+            OffersController: new OffersController(this.repositories.offers),
         }
     }
 }

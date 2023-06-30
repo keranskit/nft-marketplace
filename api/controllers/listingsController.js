@@ -1,16 +1,18 @@
 'use strict';
 
-const ethers = require("ethers");
-const {BigNumber} = require("ethers");
+const ethers = require('ethers');
+const { BigNumber } = require('ethers');
 
 class ListingsController {
 
     /**
      * ListingsController constructor
      * @param {ListingsRepository} listingsRepository
+     * @param {OffersRepository} offersRepository
      */
-    constructor(listingsRepository) {
+    constructor(listingsRepository, offersRepository) {
         this.listingsRepository = listingsRepository;
+        this.offersRepository = offersRepository;
     }
 
     /**
@@ -80,9 +82,32 @@ class ListingsController {
     async getCollectionData(ctx) {
         const collectionAddress = ctx.params.collection;
 
+        let bestOfferInWei;
+
+        await new Promise((resolve) => {
+            const stream = this.offersRepository.getCollectionOffersStream(collectionAddress);
+
+            stream.on('data', offer => {
+                const price = ethers.BigNumber.from(offer.offerPriceInWei);
+
+                if (!bestOfferInWei) bestOfferInWei = price;
+                if (bestOfferInWei.lt(price)) bestOfferInWei = price;
+            });
+
+            stream.on('error', error => {
+                console.log(error);
+                resolve();
+            });
+
+            stream.on('end', () => {
+                resolve();
+            });
+        });
+
         await new Promise((resolve) => {
             let floorPrice;
-            let tradedVolume = BigNumber.from(0)
+            let tradedVolume = BigNumber.from(0);
+
             const stream = this.listingsRepository.getCollectionStream(collectionAddress);
 
             stream.on('data', listing => {
@@ -105,7 +130,11 @@ class ListingsController {
                     collectionFloorPriceInWei: floorPrice.toString(),
                     collectionFloorPriceInEth: ethers.utils.formatUnits(floorPrice),
                     collectionTradedVolumeInWei: tradedVolume.toString(),
-                    collectionTradedVolumeInEth: ethers.utils.formatUnits(tradedVolume)
+                    collectionTradedVolumeInEth: ethers.utils.formatUnits(tradedVolume),
+                }
+                if (bestOfferInWei) {
+                    res.collectionBestOfferInWei = bestOfferInWei.toString();
+                    res.collectionBestOfferInEth = ethers.utils.formatUnits(bestOfferInWei);
                 }
 
                 this._setSuccessResponse(ctx, 200, res);

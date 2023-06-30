@@ -7,6 +7,7 @@ const http = require('http')
     , Router = require('./routes/index')
     , { MongoClient } = require('mongodb')
     , ListingsRepository = require('./repositories/listingsRepository')
+    , OffersRepository = require('./repositories/offersRepository')
     , { config } = require('dotenv')
 ;
 
@@ -34,11 +35,12 @@ async function start() {
 
     /** Init repositories */
     const listingsRepository = new ListingsRepository(db);
-
+    const offersRepository = new OffersRepository(db);
 
     /** Init Controllers */
     const controllers = new Controllers({
         listings: listingsRepository,
+        offers: offersRepository,
     });
 
     const router = new Router(controllers);

@@ -38,7 +38,7 @@ contract NFTMarketplace is ReentrancyGuard {
     event LogListingCreated(uint listingId, address contractAddress, uint tokenId, address seller, uint priceInWei);
     event LogPurchaseSuccessful(uint listingId, address buyer);
     event LogListingCanceled(uint listingId);
-    event LogOfferCreated(uint offerId, uint listingId, address proposer, uint offerPriceInWei);
+    event LogOfferCreated(uint offerId, uint listingId, address contractAddress, uint tokenId ,address proposer, uint offerPriceInWei);
     event LogOfferAccepted(uint offerId);
     event LogOfferCanceled(uint offerId);
 
@@ -86,10 +86,12 @@ contract NFTMarketplace is ReentrancyGuard {
     }
 
     function createOffer(uint listingId, uint offeredPriceInWei) public {
-        require(listings[listingId].canceled == false, "Listing is already canceled.");
-        require(listings[listingId].buyer == address(0), "Listing is already sold.");
+        Listing memory listing = listings[listingId];
+
+        require(listing.canceled == false, "Listing is already canceled.");
+        require(listing.buyer == address(0), "Listing is already sold.");
         require(offeredPriceInWei > 0, "Offered price in wei should be greater than 0");
-        require(listings[listingId].seller != msg.sender, "You cannot make offer to yourself.");
+        require(listing.seller != msg.sender, "You cannot make offer to yourself.");
 
         uint newOfferId = _offersIds.current();
         _offersIds.increment();
@@ -97,7 +99,7 @@ contract NFTMarketplace is ReentrancyGuard {
         Offer memory newOffer = Offer(newOfferId, listingId, msg.sender, offeredPriceInWei, uint32(block.timestamp), false, false, false);
         offers[newOfferId] = newOffer;
 
-        emit LogOfferCreated(newOfferId, listingId, msg.sender, offeredPriceInWei);
+        emit LogOfferCreated(newOfferId, listingId, listing.contractAddress, listing.tokenId, msg.sender, offeredPriceInWei);
     }
 
     function acceptOffer(uint offerId) public {

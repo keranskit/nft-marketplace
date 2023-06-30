@@ -3,6 +3,7 @@ const {ethers} = require('ethers');
 const nftMarketplaceJson = require('../contracts/artifacts/contracts/NFTMarketplace.sol/NFTMarketplace.json')
 const BlocksRepository = require("./repositories/blocksRepository");
 const ListingsRepository = require("./repositories/listingsRepository");
+const OffersRepository = require("./repositories/offersRepository");
 const IndexerService = require("./services/indexerService");
 const { config } = require('dotenv');
 config();
@@ -29,6 +30,7 @@ async function start() {
 
     const blocksRepository = new BlocksRepository(db);
     const listingsRepository = new ListingsRepository(db);
+    const offersRepository = new OffersRepository(db);
 
     //todo fix this to be by network
     const network = process.env.NETWORK;
@@ -37,6 +39,7 @@ async function start() {
     const indexerService = new IndexerService({
         blocksRepository: blocksRepository,
         listingsRepository: listingsRepository,
+        offersRepository: offersRepository,
         network: network,
         contractAddress: contractAddress,
         contractABI: nftMarketplaceJson.abi,

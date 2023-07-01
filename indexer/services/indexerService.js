@@ -119,7 +119,7 @@ class IndexerService {
         this.contract.on(eventNames.OFFER_CLOSED, async (offerId, listingId, buyer, soldForWei, event) => {
             try {
                 const blockData = await event.getBlock();
-                await this.processOfferCanceled(event.args, blockData);
+                await this.processOfferClosed(event.args, blockData);
 
                 await this.blocksRepository.updateLastProcessedBlock(blockData.number);
             } catch (e) {

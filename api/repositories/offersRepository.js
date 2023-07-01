@@ -18,6 +18,7 @@ class OffersRepository {
     getAllActiveOffersByCollectionStream(collectionAddress, tokenId = null) {
         const filters = {
             canceled: false,
+            closed: false,
             contractAddress: collectionAddress
         }
 

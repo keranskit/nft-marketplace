@@ -115,6 +115,17 @@ class IndexerService {
                 console.log(e)
             }
         })
+
+        this.contract.on(eventNames.OFFER_CLOSED, async (offerId, listingId, buyer, soldForWei, event) => {
+            try {
+                const blockData = await event.getBlock();
+                await this.processOfferCanceled(event.args, blockData);
+
+                await this.blocksRepository.updateLastProcessedBlock(blockData.number);
+            } catch (e) {
+                console.log(e)
+            }
+        })
     }
 
     async processEvent(event) {
@@ -132,6 +143,8 @@ class IndexerService {
             case eventNames.OFFER_CANCELED: await this.processOfferCanceled(event.args, blockData);
                 break;
             case eventNames.OFFER_ACCEPTED: await this.processOfferAccepted(event.args, blockData);
+                break;
+            case eventNames.OFFER_CLOSED: await this.processOfferClosed(event.args, blockData);
                 break;
             default:
                 console.log('Unknown event');
@@ -178,7 +191,8 @@ class IndexerService {
             offerPriceInWei: eventArgs.offerPriceInWei.toString(),
             timestamp: blockData.timestamp,
             canceled: false,
-            accepted: false
+            accepted: false,
+            closed: false,
         }
 
         console.log(`Indexer: processing offer created with id ${eventArgs.offerId.toString()}`);
@@ -196,6 +210,13 @@ class IndexerService {
         console.log(`Indexer: processing offer canceled with id ${eventArgs.offerId.toString()}`);
 
         await this.offersRepository.markOfferAsCanceled(eventArgs.offerId.toString(), blockData.timestamp);
+    }
+
+    async processOfferClosed(eventArgs, blockData) {
+        console.log(`Indexer: processing offer closed with id ${eventArgs.offerId.toString()}`);
+
+        await this.offersRepository.markOfferAsClosed(eventArgs.offerId.toString(), blockData.timestamp);
+        await this.listingsRepository.markListingAsBoughtByOffer(eventArgs.listingId.toString(), eventArgs.buyer, eventArgs.soldForWei.toString(), blockData.timestamp);
     }
 }
 

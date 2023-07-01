@@ -5,6 +5,7 @@ const eventNames = {
     OFFER_CREATED: "LogOfferCreated",
     OFFER_ACCEPTED: "LogOfferAccepted",
     OFFER_CANCELED: "LogOfferCanceled",
+    OFFER_CLOSED: "LogOfferClosed",
 }
 
 module.exports = eventNames;

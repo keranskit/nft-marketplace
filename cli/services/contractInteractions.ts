@@ -72,9 +72,9 @@ export async function cancelOffer(contract: ethers.Contract, offerId: string) {
     }
 }
 
-export async function buyListingByAcceptedOffer(contract: ethers.Contract, offerId: string) {
+export async function buyListingByAcceptedOffer(contract: ethers.Contract, offerId: string, offerPriceInWei: string) {
     try {
-        const buyListingByAcceptedOfferReceipt = await contract.buyListingByAcceptedOffer(offerId);
+        const buyListingByAcceptedOfferReceipt = await contract.buyListingByAcceptedOffer(offerId, {value: offerPriceInWei});
         const buyListingByAcceptedOfferReceiptResult = await buyListingByAcceptedOfferReceipt.wait();
         const gasUsed = ethers.utils.formatUnits(buyListingByAcceptedOfferReceiptResult.gasUsed, 'gwei');
 

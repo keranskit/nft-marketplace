@@ -31,6 +31,15 @@ class ListingsRepository {
             {'$set': update}
         );
     }
+
+    async markListingAsBoughtByOffer(listingId, buyer, price, timestamp) {
+        const update = {'active': false, 'buyer': buyer, 'timestamp': timestamp, 'priceInWei': price}
+
+        return this.collection.findOneAndUpdate(
+            {listingId: listingId},
+            {'$set': update}
+        );
+    }
 }
 
 module.exports = ListingsRepository;

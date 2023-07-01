@@ -257,6 +257,6 @@ describe("NFTMarketplace", function () {
         const [owner, addr1] = await ethers.getSigners();
 
         await expect(nftMarketplace.connect(addr1).buyListingByAcceptedOffer(2, {value: 3000000000}))
-            .to.emit(nftMarketplace, "LogPurchaseSuccessful");
+            .to.emit(nftMarketplace, "LogOfferClosed");
     });
 });

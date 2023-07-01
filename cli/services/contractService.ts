@@ -36,7 +36,7 @@ export async function proceedCommand(contract: ethers.Contract, signer: ethers.W
 
             break;
         case commands.BUY_LISTING_BY_ACCEPTED_OFFER:
-            await buyListingByAcceptedOffer(contract, firstParam);
+            await buyListingByAcceptedOffer(contract, firstParam, secondParam);
 
             break;
         default:

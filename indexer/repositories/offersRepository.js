@@ -30,6 +30,14 @@ class OffersRepository {
             {'$set': update}
         );
     }
+
+    async markOfferAsClosed(offerId, timestamp) {
+        const update = {'closed': true, 'timestamp': timestamp}
+        return this.collection.findOneAndUpdate(
+            {offerId: offerId},
+            {'$set': update}
+        );
+    }
 }
 
 module.exports = OffersRepository;

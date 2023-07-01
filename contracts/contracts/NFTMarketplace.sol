@@ -29,7 +29,7 @@ contract NFTMarketplace is ReentrancyGuard {
         uint32 timestamp;
         bool canceled;
         bool acceptedBySeller;
-        bool completed;
+        bool closed;
     }
 
     mapping (uint => Listing) private listings;
@@ -41,6 +41,7 @@ contract NFTMarketplace is ReentrancyGuard {
     event LogOfferCreated(uint offerId, uint listingId, address contractAddress, uint tokenId ,address proposer, uint offerPriceInWei);
     event LogOfferAccepted(uint offerId);
     event LogOfferCanceled(uint offerId);
+    event LogOfferClosed(uint offerId, uint listingId, address buyer, uint soldForWei);
 
     function createListing(address contractAddress, uint tokenId, uint priceInWei) public isERC721(contractAddress) {
         IERC721 contractInstance = IERC721(contractAddress);
@@ -122,16 +123,15 @@ contract NFTMarketplace is ReentrancyGuard {
     }
 
     function buyListingByAcceptedOffer(uint offerId) public payable nonReentrant {
-        uint listingId = offers[offerId].listingId;
+        Offer storage offer = offers[offerId];
+        Listing storage listing = listings[offer.listingId];
 
-        require(listings[listingId].canceled == false, "Listing is canceled.");
-        require(listings[listingId].buyer == address(0), "Listing is already sold.");
-        require(offers[offerId].acceptedBySeller == true, "Offer is not accepted.");
-        require(offers[offerId].proposer == msg.sender, "Offer is not yours");
-        require(offers[offerId].canceled == false, "Offer is already canceled");
-        require(offers[offerId].offeredPriceInWei == msg.value, "Offered price is not the same as the value provided");
-
-        Listing storage listing = listings[listingId];
+        require(listing.canceled == false, "Listing is canceled.");
+        require(listing.buyer == address(0), "Listing is already sold.");
+        require(offer.acceptedBySeller == true, "Offer is not accepted.");
+        require(offer.proposer == msg.sender, "Offer is not yours");
+        require(offer.canceled == false, "Offer is already canceled");
+        require(offer.offeredPriceInWei == msg.value, "Offered price is not the same as the value provided");
 
         IERC721 contractInstance = IERC721(listing.contractAddress);
 
@@ -140,11 +140,11 @@ contract NFTMarketplace is ReentrancyGuard {
         payable(listing.seller).transfer(msg.value);
 
         listing.buyer = msg.sender;
+        listing.priceInWei = offer.offeredPriceInWei;
 
-        Offer storage offer = offers[offerId];
-        offer.completed = true;
+        offer.closed = true;
 
-        emit LogPurchaseSuccessful(listingId, msg.sender);
+        emit LogOfferClosed(offerId, offer.listingId, msg.sender, offer.offeredPriceInWei);
     }
 
     modifier isERC721(address contractAddress) {

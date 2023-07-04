@@ -8,18 +8,18 @@ class IndexerService {
     /**
      * @param {BlocksRepository} blocksRepository
      * @param {ListingsRepository} listingsRepository
+     * @param {OffersRepository} offersRepository
      * @param {string} network
      * @param {string} contractAddress
      * @param {Object[]} contractABI
      */
-    constructor({blocksRepository, listingsRepository, network, contractAddress, contractABI}) {
+    constructor({blocksRepository, listingsRepository, offersRepository, network, contractAddress, contractABI}) {
         this.blocksRepository = blocksRepository;
         this.listingsRepository = listingsRepository;
+        this.offersRepository = offersRepository;
         this.provider = new ethers.providers.InfuraProvider(network, process.env['INFURA_SEPOLIA_API_KEY']);
         this.contract = new ethers.Contract(contractAddress, contractABI, this.provider);
     }
-
-    //todo add some logs and some debugging
 
     async startIndexer() {
         const lastProcessedBlock = await this.blocksRepository.getLastProcessedBlock();
@@ -70,13 +70,56 @@ class IndexerService {
             } catch (e) {
                 console.log(e)
             }
-
         })
 
         this.contract.on(eventNames.PURCHASE_SUCCESSFUL, async (listingId, buyer, event) => {
             try {
                 const blockData = await event.getBlock();
                 await this.processPurchaseSuccessful(event.args, blockData);
+
+                await this.blocksRepository.updateLastProcessedBlock(blockData.number);
+            } catch (e) {
+                console.log(e)
+            }
+        })
+
+        this.contract.on(eventNames.OFFER_CREATED, async (offerId, listingId, contractAddress, tokenId, proposer, offerPriceInWei, event) => {
+            try {
+                const blockData = await event.getBlock();
+                await this.processOfferCreated(event.args, blockData);
+
+                await this.blocksRepository.updateLastProcessedBlock(blockData.number);
+            } catch (e) {
+                console.log(e)
+            }
+        })
+
+        this.contract.on(eventNames.OFFER_ACCEPTED, async (offerId, event) => {
+            try {
+                const blockData = await event.getBlock();
+                await this.processOfferAccepted(event.args, blockData);
+
+                await this.blocksRepository.updateLastProcessedBlock(blockData.number);
+            } catch (e) {
+                console.log(e)
+            }
+        })
+
+        this.contract.on(eventNames.OFFER_CANCELED, async (offerId, event) => {
+            try {
+                const blockData = await event.getBlock();
+                await this.processOfferCanceled(event.args, blockData);
+
+                await this.blocksRepository.updateLastProcessedBlock(blockData.number);
+            } catch (e) {
+                console.log(e)
+            }
+        })
+
+        this.contract.on(eventNames.OFFER_CLOSED, async (offerId, listingId, buyer, soldForWei, event) => {
+            try {
+                const blockData = await event.getBlock();
+                await this.processOfferClosed(event.args, blockData);
 
                 await this.blocksRepository.updateLastProcessedBlock(blockData.number);
             } catch (e) {
@@ -95,6 +138,14 @@ class IndexerService {
                 break;
             case eventNames.PURCHASE_SUCCESSFUL: await this.processPurchaseSuccessful(event.args, blockData);
                 break;
+            case eventNames.OFFER_CREATED: await this.processOfferCreated(event.args, blockData);
+                break;
+            case eventNames.OFFER_CANCELED: await this.processOfferCanceled(event.args, blockData);
+                break;
+            case eventNames.OFFER_ACCEPTED: await this.processOfferAccepted(event.args, blockData);
+                break;
+            case eventNames.OFFER_CLOSED: await this.processOfferClosed(event.args, blockData);
+                break;
             default:
                 console.log('Unknown event');
                 break;
@@ -102,16 +153,16 @@ class IndexerService {
     }
 
     async processListingCreated(eventArgs, blockData) {
-        const data = {};
-
-        data.listingId = eventArgs.listingId.toString();
-        data.contractAddress = eventArgs.contractAddress;
-        data.tokenId = eventArgs.tokenId.toString();
-        data.seller = eventArgs.seller;
-        data.buyer = ethers.constants.AddressZero;
-        data.priceInWei = eventArgs.priceInWei.toString();
-        data.timestamp = blockData.timestamp;
-        data.active = true;
+        const data = {
+            listingId: eventArgs.listingId.toString(),
+            contractAddress: eventArgs.contractAddress,
+            tokenId: eventArgs.tokenId.toString(),
+            seller: eventArgs.seller,
+            buyer: ethers.constants.AddressZero,
+            priceInWei: eventArgs.priceInWei.toString(),
+            timestamp: blockData.timestamp,
+            active: true
+        };
 
         console.log(`Indexer: processing listing created with id ${data.listingId}`);
 
@@ -128,6 +179,44 @@ class IndexerService {
         console.log(`Indexer: processing purchase successful with id ${eventArgs.listingId.toString()}`);
 
         await this.listingsRepository.markListingAsBought(eventArgs.listingId.toString(), eventArgs.buyer, blockData.timestamp);
+    }
+
+    async processOfferCreated(eventArgs, blockData) {
+        const data = {
+            offerId: eventArgs.offerId.toString(),
+            listingId: eventArgs.listingId.toString(),
+            contractAddress: eventArgs.contractAddress,
+            tokenId: eventArgs.tokenId.toString(),
+            proposer: eventArgs.proposer,
+            offerPriceInWei: eventArgs.offerPriceInWei.toString(),
+            timestamp: blockData.timestamp,
+            canceled: false,
+            accepted: false,
+            closed: false,
+        }
+
+        console.log(`Indexer: processing offer created with id ${eventArgs.offerId.toString()}`);
+
+        await this.offersRepository.createOffer(data);
+    }
+
+    async processOfferAccepted(eventArgs, blockData) {
+        console.log(`Indexer: processing offer accepted with id ${eventArgs.offerId.toString()}`);
+
+        await this.offersRepository.markOfferAsAccepted(eventArgs.offerId.toString(), blockData.timestamp);
+    }
+
+    async processOfferCanceled(eventArgs, blockData) {
+        console.log(`Indexer: processing offer canceled with id ${eventArgs.offerId.toString()}`);
+
+        await this.offersRepository.markOfferAsCanceled(eventArgs.offerId.toString(), blockData.timestamp);
+    }
+
+    async processOfferClosed(eventArgs, blockData) {
+        console.log(`Indexer: processing offer closed with id ${eventArgs.offerId.toString()}`);
+
+        await this.offersRepository.markOfferAsClosed(eventArgs.offerId.toString(), blockData.timestamp);
+        await this.listingsRepository.markListingAsBoughtByOffer(eventArgs.listingId.toString(), eventArgs.buyer, eventArgs.soldForWei.toString(), blockData.timestamp);
     }
 }
 

@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { INPUTS, NETWORKS } from '../constants/constants'
 import { InvalidNetworkException } from "../exceptions/InvalidNetworkException";
 import { InvalidEnvironmentDataException } from "../exceptions/InvalidEnvironmentDataException";
-import { createListing, buyListing, cancelListing } from "./contractInteractions";
+import { createListing, buyListing, cancelListing, createOffer, acceptOffer, cancelOffer, buyListingByAcceptedOffer } from "./contractInteractions";
 import { InvalidInputException } from "../exceptions/InvalidInputException";
 
 const nftMarketplaceJson = require('../../contracts/artifacts/contracts/NFTMarketplace.sol/NFTMarketplace.json')
@@ -21,6 +21,22 @@ export async function proceedCommand(contract: ethers.Contract, signer: ethers.W
             break;
         case commands.CANCEL_LISTING:
             await cancelListing(contract, firstParam);
+
+            break;
+        case commands.CREATE_OFFER:
+            await createOffer(contract, firstParam, secondParam);
+
+            break;
+        case commands.ACCEPT_OFFER:
+            await acceptOffer(contract, firstParam);
+
+            break;
+        case commands.CANCEL_OFFER:
+            await cancelOffer(contract, firstParam);
+
+            break;
+        case commands.BUY_LISTING_BY_ACCEPTED_OFFER:
+            await buyListingByAcceptedOffer(contract, firstParam, secondParam);
 
             break;
         default:

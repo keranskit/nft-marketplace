@@ -1,4 +1,5 @@
 'use strict';
+
 const MongoClient = require('mongodb');
 
 class ListingsRepository {
@@ -24,6 +25,15 @@ class ListingsRepository {
 
     async markListingAsBought(listingId, buyer, timestamp) {
         const update = {'active': false, 'buyer': buyer, 'timestamp': timestamp}
+
+        return this.collection.findOneAndUpdate(
+            {listingId: listingId},
+            {'$set': update}
+        );
+    }
+
+    async markListingAsBoughtByOffer(listingId, buyer, price, timestamp) {
+        const update = {'active': false, 'buyer': buyer, 'timestamp': timestamp, 'priceInWei': price}
 
         return this.collection.findOneAndUpdate(
             {listingId: listingId},

@@ -1,7 +1,6 @@
 'use strict';
 
 const ListingModel = require('../models/listingModel');
-const { ethers } = require('ethers');
 
 class ListingsRepository {
 
@@ -12,6 +11,9 @@ class ListingsRepository {
         this.collection = db.collection('listings');
     }
 
+    /**
+     * @param {string} collectionAddress
+     */
     getAllActiveListingsByCollectionStream(collectionAddress) {
         const filters = {
             active: true,
@@ -21,6 +23,9 @@ class ListingsRepository {
         return this.collection.find(filters).stream({transform: doc => ListingModel.fromBSON(doc)});
     }
 
+    /**
+     * @param {string} seller
+     */
     getAllActiveListingsByCreatorStream(seller) {
         const filters = {
             active: true,
@@ -30,6 +35,9 @@ class ListingsRepository {
         return this.collection.find(filters).stream({transform: doc => ListingModel.fromBSON(doc)});
     }
 
+    /**
+     * @param {string} collectionAddress
+     */
     getCollectionStream(collectionAddress) {
         const filters = {
             contractAddress: collectionAddress
@@ -38,6 +46,9 @@ class ListingsRepository {
         return this.collection.find(filters).stream({transform: doc => ListingModel.fromBSON(doc)});
     }
 
+    /**
+     * @param {string} buyer
+     */
     getPurchaseHistoryByBuyerStream(buyer) {
         const filters = {
             active: false,

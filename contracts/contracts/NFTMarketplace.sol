@@ -40,7 +40,7 @@ contract NFTMarketplace is ReentrancyGuard {
     event LogListingCreated(uint256 listingId, address contractAddress, uint256 tokenId, address seller, uint256 priceInWei);
     event LogPurchaseSuccessful(uint256 listingId, address buyer);
     event LogListingCanceled(uint256 listingId);
-    event LogOfferCreated(uint256 offerId, uint256 listingId, address contractAddress, uint256 tokenId ,address proposer, uint256 offerPriceInWei);
+    event LogOfferCreated(uint256 offerId, uint256 listingId, address contractAddress, uint256 tokenId ,address proposer, uint256 priceInWei);
     event LogOfferAccepted(uint256 offerId);
     event LogOfferCanceled(uint256 offerId);
     event LogOfferClosed(uint256 offerId, uint256 listingId, address buyer, uint256 soldForWei);

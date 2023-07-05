@@ -12,37 +12,60 @@ class IndexerService {
      * @param {string} network
      * @param {string} contractAddress
      * @param {Object[]} contractABI
+     * @param {number} contractCreationBlockNumber
      */
-    constructor({blocksRepository, listingsRepository, offersRepository, network, contractAddress, contractABI}) {
+    constructor({blocksRepository, listingsRepository, offersRepository, network, contractAddress, contractABI, contractCreationBlockNumber}) {
         this.blocksRepository = blocksRepository;
         this.listingsRepository = listingsRepository;
         this.offersRepository = offersRepository;
         this.provider = new ethers.providers.InfuraProvider(network, process.env['INFURA_SEPOLIA_API_KEY']);
         this.contract = new ethers.Contract(contractAddress, contractABI, this.provider);
+        this.contractCreationBlockNumber = contractCreationBlockNumber;
+        this.ethersQueryFilterBlocksLimit = 3;
     }
 
     async startIndexer() {
-        const lastProcessedBlock = await this.blocksRepository.getLastProcessedBlock();
-        const networkLastBlock = await this.provider.getBlockNumber();
+        try {
+            const lastProcessedBlock = await this.blocksRepository.getLastProcessedBlock();
+            const networkLastBlock = await this.provider.getBlockNumber();
 
-        if (!lastProcessedBlock) {
-            await this.processContractOldEvents(networkLastBlock);
-        } else if (lastProcessedBlock.blockNumber < networkLastBlock) {
-            await this.processContractOldEvents(networkLastBlock, lastProcessedBlock.blockNumber);
-        } else {
-            await this.startListeningForNewEvents();
+            if (!lastProcessedBlock) {
+                await this.processContractOldEvents(networkLastBlock, this.contractCreationBlockNumber);
+            } else if (lastProcessedBlock.blockNumber < networkLastBlock) {
+                await this.processContractOldEvents(networkLastBlock, lastProcessedBlock.blockNumber);
+            } else {
+                await this.startListeningForNewEvents();
+            }
+
+        } catch (e) {
+            console.log(e)
+
+            await this.startIndexer();
         }
     }
 
     async processContractOldEvents(networkLastBlock, fromBlockNumber = undefined) {
         console.log('Processing old events...')
 
-        const contractEvents = await this.contract.queryFilter('*', fromBlockNumber);
-        for (const event of contractEvents) {
-            await this.processEvent(event);
-        }
+        for (let chunk = fromBlockNumber; chunk < networkLastBlock; chunk += this.ethersQueryFilterBlocksLimit) {
+            const toBlockNumber = chunk + this.ethersQueryFilterBlocksLimit;
 
-        await this.blocksRepository.updateLastProcessedBlock(networkLastBlock);
+            if (toBlockNumber > networkLastBlock) {
+                const contractEvents = await this.contract.queryFilter('*', chunk, networkLastBlock);
+                for (const event of contractEvents) {
+                    await this.processEvent(event);
+                }
+
+                await this.blocksRepository.updateLastProcessedBlock(networkLastBlock);
+            } else {
+                const contractEvents = await this.contract.queryFilter('*', chunk, toBlockNumber);
+                for (const event of contractEvents) {
+                    await this.processEvent(event);
+                }
+
+                await this.blocksRepository.updateLastProcessedBlock(toBlockNumber);
+            }
+        }
 
         await this.startIndexer();
     }
@@ -83,7 +106,7 @@ class IndexerService {
             }
         })
 
-        this.contract.on(eventNames.OFFER_CREATED, async (offerId, listingId, contractAddress, tokenId, proposer, offerPriceInWei, event) => {
+        this.contract.on(eventNames.OFFER_CREATED, async (offerId, listingId, contractAddress, tokenId, proposer, priceInWei, event) => {
             try {
                 const blockData = await event.getBlock();
                 await this.processOfferCreated(event.args, blockData);
@@ -147,7 +170,7 @@ class IndexerService {
             case eventNames.OFFER_CLOSED: await this.processOfferClosed(event.args, blockData);
                 break;
             default:
-                console.log('Unknown event');
+                console.log('Unknown event: ', event.event);
                 break;
         }
     }
@@ -188,7 +211,7 @@ class IndexerService {
             contractAddress: eventArgs.contractAddress,
             tokenId: eventArgs.tokenId.toString(),
             proposer: eventArgs.proposer,
-            offerPriceInWei: eventArgs.offerPriceInWei.toString(),
+            priceInWei: eventArgs.priceInWei.toString(),
             timestamp: blockData.timestamp,
             canceled: false,
             accepted: false,

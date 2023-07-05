@@ -8,16 +8,16 @@ class OfferModel {
      * @param {string} contractAddress
      * @param {string} tokenId
      * @param {string} proposer
-     * @param {string} offerPriceInWei
+     * @param {string} priceInWei
      * @param {number} timestamp
      */
-    constructor({offerId, listingId, contractAddress, tokenId, proposer, offerPriceInWei, timestamp}) {
+    constructor({offerId, listingId, contractAddress, tokenId, proposer, priceInWei, timestamp}) {
         this.offerId = offerId;
         this.listingId = listingId;
         this.contractAddress = contractAddress;
         this.tokenId = tokenId;
         this.proposer = proposer;
-        this.offerPriceInWei = offerPriceInWei;
+        this.priceInWei = priceInWei;
         this.timestamp = timestamp;
     }
 
@@ -32,7 +32,7 @@ class OfferModel {
             contractAddress: data['contractAddress'],
             tokenId: data['tokenId'],
             proposer: data['proposer'],
-            offerPriceInWei: data['offerPriceInWei'],
+            priceInWei: data['priceInWei'],
             timestamp: data['timestamp'],
         });
     }

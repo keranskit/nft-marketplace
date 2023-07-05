@@ -88,7 +88,7 @@ class ListingsController {
             const stream = this.offersRepository.getCollectionOffersStream(collectionAddress);
 
             stream.on('data', offer => {
-                const price = ethers.BigNumber.from(offer.offerPriceInWei);
+                const price = ethers.BigNumber.from(offer.priceInWei);
 
                 if (!bestOfferInWei) bestOfferInWei = price;
                 if (bestOfferInWei.lt(price)) bestOfferInWei = price;

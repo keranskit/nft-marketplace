@@ -5,52 +5,59 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+///@title A marketplace for ERC721 NFT
+///@author Trayan Keranov
 contract NFTMarketplace is ReentrancyGuard {
     using Counters for Counters.Counter;
     Counters.Counter private _listingsIds;
     Counters.Counter private _offersIds;
 
     struct Listing {
-        uint listingId;
+        uint256 listingId;
         address contractAddress;
-        uint tokenId;
+        uint256 tokenId;
         address seller;
         address buyer;
-        uint priceInWei;
+        uint256 priceInWei;
         uint32 timestamp;
         bool canceled;
     }
 
     struct Offer {
-        uint offerId;
-        uint listingId;
+        uint256 offerId;
+        uint256 listingId;
         address proposer;
-        uint offeredPriceInWei;
+        uint256 priceInWei;
         uint32 timestamp;
         bool canceled;
         bool acceptedBySeller;
         bool closed;
     }
 
-    mapping (uint => Listing) private listings;
-    mapping (uint => Offer) private offers;
+    mapping (uint256 => Listing) private listings;
+    mapping (uint256 => Offer) private offers;
 
-    event LogListingCreated(uint listingId, address contractAddress, uint tokenId, address seller, uint priceInWei);
-    event LogPurchaseSuccessful(uint listingId, address buyer);
-    event LogListingCanceled(uint listingId);
-    event LogOfferCreated(uint offerId, uint listingId, address contractAddress, uint tokenId ,address proposer, uint offerPriceInWei);
-    event LogOfferAccepted(uint offerId);
-    event LogOfferCanceled(uint offerId);
-    event LogOfferClosed(uint offerId, uint listingId, address buyer, uint soldForWei);
+    event LogListingCreated(uint256 listingId, address contractAddress, uint256 tokenId, address seller, uint256 priceInWei);
+    event LogPurchaseSuccessful(uint256 listingId, address buyer);
+    event LogListingCanceled(uint256 listingId);
+    event LogOfferCreated(uint256 offerId, uint256 listingId, address contractAddress, uint256 tokenId ,address proposer, uint256 priceInWei);
+    event LogOfferAccepted(uint256 offerId);
+    event LogOfferCanceled(uint256 offerId);
+    event LogOfferClosed(uint256 offerId, uint256 listingId, address buyer, uint256 soldForWei);
 
-    function createListing(address contractAddress, uint tokenId, uint priceInWei) public isERC721(contractAddress) {
+    ///@notice Creates a listing in the marketplace
+    ///@dev The marketplace should be allowed to transfer tokens (setApprovalForAll)
+    ///@param contractAddress The ERC721 contract address
+    ///@param tokenId The Id of the token
+    ///@param priceInWei The price that the creator wants for the token (in WEI)
+    function createListing(address contractAddress, uint256 tokenId, uint256 priceInWei) public isERC721(contractAddress) {
         IERC721 contractInstance = IERC721(contractAddress);
 
         require(priceInWei > 0, "Price in wei should be greater than 0");
         require(contractInstance.ownerOf(tokenId) == msg.sender, "You are not the owner of this tokenId");
         require(contractInstance.isApprovedForAll(msg.sender, address(this)), "NFTMarketplace is not allowed to transfer your tokens.");
 
-        uint newListingId = _listingsIds.current();
+        uint256 newListingId = _listingsIds.current();
         _listingsIds.increment();
 
         Listing memory newListing = Listing(newListingId, contractAddress, tokenId, msg.sender, address(0), priceInWei, uint32(block.timestamp), false);
@@ -59,7 +66,10 @@ contract NFTMarketplace is ReentrancyGuard {
         emit LogListingCreated(newListingId, contractAddress, tokenId, msg.sender, priceInWei);
     }
 
-    function buyListing(uint listingId) public payable nonReentrant {
+    ///@notice Buys a listing from the marketplace
+    ///@dev The marketplace transfers the token to the buyer and moves the sent ethers to the creator of the listing
+    ///@param listingId The ID of the listing that the user wants to buy
+    function buyListing(uint256 listingId) public payable nonReentrant {
         require(listings[listingId].canceled == false, "Listing is canceled.");
         require(listings[listingId].seller != msg.sender, "You cannot buy your own listing.");
         require(listings[listingId].buyer == address(0), "Listing is already sold.");
@@ -67,18 +77,20 @@ contract NFTMarketplace is ReentrancyGuard {
 
         Listing storage listing = listings[listingId];
 
+        listing.buyer = msg.sender;
+
         IERC721 contractInstance = IERC721(listing.contractAddress);
 
         contractInstance.safeTransferFrom(listing.seller, msg.sender, listing.tokenId);
 
         payable(listing.seller).transfer(msg.value);
 
-        listing.buyer = msg.sender;
-
         emit LogPurchaseSuccessful(listingId, msg.sender);
     }
 
-    function cancelListing(uint listingId) public {
+    ///@notice Function that cancels a listing
+    ///@param listingId The ID of the listing that the user wants to cancel
+    function cancelListing(uint256 listingId) public {
         require(listings[listingId].seller == msg.sender, "You are not the creator of this listing.");
         require(listings[listingId].canceled == false, "Listing is already canceled.");
         listings[listingId].canceled = true;
@@ -86,24 +98,30 @@ contract NFTMarketplace is ReentrancyGuard {
         emit LogListingCanceled(listingId);
     }
 
-    function createOffer(uint listingId, uint offeredPriceInWei) public {
+    ///@notice Creates an offer for existing listing in the marketplace
+    ///@param listingId The ID of the listing that the user wants to make offer for
+    ///@param priceInWei The price that the user wants to offer (in WEI)
+    function createOffer(uint256 listingId, uint256 priceInWei) public {
         Listing memory listing = listings[listingId];
 
         require(listing.canceled == false, "Listing is already canceled.");
         require(listing.buyer == address(0), "Listing is already sold.");
-        require(offeredPriceInWei > 0, "Offered price in wei should be greater than 0");
+        require(priceInWei > 0, "Offered price in wei should be greater than 0");
         require(listing.seller != msg.sender, "You cannot make offer to yourself.");
 
-        uint newOfferId = _offersIds.current();
+        uint256 newOfferId = _offersIds.current();
         _offersIds.increment();
 
-        Offer memory newOffer = Offer(newOfferId, listingId, msg.sender, offeredPriceInWei, uint32(block.timestamp), false, false, false);
+        Offer memory newOffer = Offer(newOfferId, listingId, msg.sender, priceInWei, uint32(block.timestamp), false, false, false);
         offers[newOfferId] = newOffer;
 
-        emit LogOfferCreated(newOfferId, listingId, listing.contractAddress, listing.tokenId, msg.sender, offeredPriceInWei);
+        emit LogOfferCreated(newOfferId, listingId, listing.contractAddress, listing.tokenId, msg.sender, priceInWei);
     }
 
-    function acceptOffer(uint offerId) public {
+    ///@notice Accepts existing offer for specific listing in the marketplace
+    ///@dev Only the creator of the listing can accept an offer
+    ///@param offerId The ID of the offer that the user wants accept
+    function acceptOffer(uint256 offerId) public {
         require(offers[offerId].canceled == false, "Offer is already canceled");
         require(listings[offers[offerId].listingId].seller == msg.sender, "You cannot accept offers for someone else's listings.");
 
@@ -113,7 +131,10 @@ contract NFTMarketplace is ReentrancyGuard {
         emit LogOfferAccepted(offerId);
     }
 
-    function cancelOffer(uint offerId) public {
+    ///@notice Cancels existing offer for specific listing in the marketplace
+    ///@dev Only the creator of the offer can cancel the offer
+    ///@param offerId The ID of the offer that the user wants to cancel
+    function cancelOffer(uint256 offerId) public {
         require(offers[offerId].proposer == msg.sender ,"You are not the proposer of this offer.");
 
         Offer storage offer = offers[offerId];
@@ -122,7 +143,10 @@ contract NFTMarketplace is ReentrancyGuard {
         emit LogOfferCanceled(offerId);
     }
 
-    function buyListingByAcceptedOffer(uint offerId) public payable nonReentrant {
+    ///@notice Complete an existing deal (when the creator of the listing accepts an offer)
+    ///@dev When the offer is accepted by the listing creator, the offer creator should call this function to complete the transfer
+    ///@param offerId The ID of the offer that the user wants to complete
+    function buyListingByAcceptedOffer(uint256 offerId) public payable nonReentrant {
         Offer storage offer = offers[offerId];
         Listing storage listing = listings[offer.listingId];
 
@@ -131,7 +155,7 @@ contract NFTMarketplace is ReentrancyGuard {
         require(offer.acceptedBySeller == true, "Offer is not accepted.");
         require(offer.proposer == msg.sender, "Offer is not yours");
         require(offer.canceled == false, "Offer is already canceled");
-        require(offer.offeredPriceInWei == msg.value, "Offered price is not the same as the value provided");
+        require(offer.priceInWei == msg.value, "Offered price is not the same as the value provided");
 
         IERC721 contractInstance = IERC721(listing.contractAddress);
 
@@ -140,13 +164,15 @@ contract NFTMarketplace is ReentrancyGuard {
         payable(listing.seller).transfer(msg.value);
 
         listing.buyer = msg.sender;
-        listing.priceInWei = offer.offeredPriceInWei;
+        listing.priceInWei = offer.priceInWei;
 
         offer.closed = true;
 
-        emit LogOfferClosed(offerId, offer.listingId, msg.sender, offer.offeredPriceInWei);
+        emit LogOfferClosed(offerId, offer.listingId, msg.sender, offer.priceInWei);
     }
 
+    ///@notice Checks if a contractAddress supports ERC721 interface
+    ///@param contractAddress The address to check
     modifier isERC721(address contractAddress) {
         require(IERC165(contractAddress).supportsInterface(type(IERC721).interfaceId), "Provided address is not an ERC721 contract.");
         _;

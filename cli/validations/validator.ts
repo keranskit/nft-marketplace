@@ -20,7 +20,6 @@ export function validateNetwork(network: string) {
 export function validateCommand(command: string, firstParam: any, secondParam: any, thirdParam: any) {
     if (!allowedCommands.includes(command)) throw new InvalidInputException(`Invalid command. Should be one of ${allowedCommands}`);
 
-    //todo fix this poop
     if (commandAdditionalParams[command] === 1 && !firstParam) throw new InvalidInputException(`Invalid additional params.`);
     if (commandAdditionalParams[command] === 2 && (!firstParam || !secondParam)) throw new InvalidInputException(`Invalid additional params.`);
     if (commandAdditionalParams[command] === 3 && (!firstParam || !secondParam || !thirdParam)) throw new InvalidInputException(`Invalid additional params.`);

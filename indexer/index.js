@@ -32,9 +32,9 @@ async function start() {
     const listingsRepository = new ListingsRepository(db);
     const offersRepository = new OffersRepository(db);
 
-    //todo fix this to be by network
     const network = process.env.NETWORK;
     const contractAddress = process.env.SEPOLIA_CONTRACT_ADDRESS;
+    const contractCreationBlockNumber = Number(process.env.CONTRACT_CREATION_BLOCK_NUMBER);
 
     const indexerService = new IndexerService({
         blocksRepository: blocksRepository,
@@ -43,6 +43,7 @@ async function start() {
         network: network,
         contractAddress: contractAddress,
         contractABI: nftMarketplaceJson.abi,
+        contractCreationBlockNumber: contractCreationBlockNumber
     });
 
     await indexerService.startIndexer();

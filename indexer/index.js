@@ -1,5 +1,4 @@
 const { MongoClient } = require('mongodb');
-const {ethers} = require('ethers');
 const nftMarketplaceJson = require('../contracts/artifacts/contracts/NFTMarketplace.sol/NFTMarketplace.json')
 const BlocksRepository = require("./repositories/blocksRepository");
 const ListingsRepository = require("./repositories/listingsRepository");

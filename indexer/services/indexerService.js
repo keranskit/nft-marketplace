@@ -21,7 +21,7 @@ class IndexerService {
         this.provider = new ethers.providers.InfuraProvider(network, process.env['INFURA_SEPOLIA_API_KEY']);
         this.contract = new ethers.Contract(contractAddress, contractABI, this.provider);
         this.contractCreationBlockNumber = contractCreationBlockNumber;
-        this.ethersQueryFilterBlocksLimit = 3;
+        this.ethersQueryFilterBlocksLimit = 10000;
     }
 
     async startIndexer() {

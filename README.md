@@ -35,3 +35,7 @@ To start the indexer run
 To start the API server run
 
 `npm run start-api-server`
+
+API Endpoints examples (postman collection)
+
+`https://api.postman.com/collections/25529776-1a5ede73-672c-4605-bc3d-086ab4267135?access_key=PMAT-01H4RD0ZNHF5ZR1FF0VFMN4NX3`

@@ -10,8 +10,8 @@ export async function main(_privateKey: any) {
     console.log(`The NFTMarketplace contract is deployed to ${nftMarketplace.address}`);
 
     /* todo uncomment to deploy a test ERC721 contract with faucet function */
-    // const e271factory = await ethers.getContractFactory('E721');
-    // const e721 = await e271factory.connect(wallet).deploy();
+    // const e721factory = await ethers.getContractFactory('E721');
+    // const e721 = await e721factory.connect(wallet).deploy();
     // await e721.deployed();
     // console.log(`The e721 contract is deployed to ${e721.address}`);
 }

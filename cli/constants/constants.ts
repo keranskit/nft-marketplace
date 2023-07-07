@@ -30,6 +30,6 @@ export const INPUTS = {
     },
     BUY_LISTING_BY_ACCEPTED_OFFER: {
         command: 'buy-listing-by-offer',
-        additionalParamsCount: 1
+        additionalParamsCount: 2
     },
 }
